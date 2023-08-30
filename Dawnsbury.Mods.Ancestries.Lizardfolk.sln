@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34004.107
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dawnsbury.Mods.Ancestries.Lizardfolk", "Dawnsbury.Mods.Ancestries.Lizardfolk.csproj", "{A26C5AFF-ECEF-4713-996D-1B68DA0008CB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A26C5AFF-ECEF-4713-996D-1B68DA0008CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A26C5AFF-ECEF-4713-996D-1B68DA0008CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A26C5AFF-ECEF-4713-996D-1B68DA0008CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A26C5AFF-ECEF-4713-996D-1B68DA0008CB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0C1B66EF-267D-4E9E-AAD7-7312F4BA325C}
+	EndGlobalSection
+EndGlobal
