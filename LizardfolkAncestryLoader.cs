@@ -1,13 +1,25 @@
-﻿using Origin.Core.CharacterBuilder.AbilityScores;
+﻿using Origin.Audio;
+using Origin.Core;
+using Origin.Core.Animations;
+using Origin.Core.CharacterBuilder.AbilityScores;
 using Origin.Core.CharacterBuilder.Feats;
+using Origin.Core.CharacterBuilder.FeatsDb.Common;
 using Origin.Core.CharacterBuilder.FeatsDb.TrueFeatDb;
 using Origin.Core.CombatActions;
+using Origin.Core.Coroutines.Options;
+using Origin.Core.Coroutines.Requests;
+using Origin.Core.Creatures;
+using Origin.Core.Intelligence;
 using Origin.Core.Mechanics;
 using Origin.Core.Mechanics.Core;
 using Origin.Core.Mechanics.Enumerations;
+using Origin.Core.Mechanics.Targeting;
 using Origin.Core.Mechanics.Treasure;
+using Origin.Core.Possibilities;
+using Origin.Core.Tiles;
 using Origin.Display.Illustrations;
 using Origin.Modding;
+using System;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
@@ -41,7 +53,7 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
                 })
                 .WithOnCreature(creature =>
                 {
-                    creature.UnarmedStrike = new Item(Origin.Core.IllustrationName.DragonClaws, "claws",
+                    creature.UnarmedStrike = new Item(IllustrationName.DragonClaws, "claws",
                             new[] { Trait.Agile, Trait.Finesse, Trait.Unarmed, Trait.Melee, Trait.Weapon })
                         .WithWeaponProperties(new WeaponProperties("1d4", DamageKind.Slashing));
                 })
@@ -59,7 +71,7 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
             {
                 creature.AddQEffect(new QEffect("Sharp Fangs", "You have a fangs attack.")
                 {
-                    AdditionalUnarmedStrike = new Item(Origin.Core.IllustrationName.Jaws, "fangs",
+                    AdditionalUnarmedStrike = new Item(IllustrationName.Jaws, "fangs",
                             new[] { Trait.Unarmed, Trait.Melee, Trait.Weapon })
                         .WithWeaponProperties(new WeaponProperties("1d8", DamageKind.Piercing))
                 });
@@ -74,7 +86,7 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
             {
                 creature.AddQEffect(new QEffect("Tail Whip", "You have a tail attack.")
                 {
-                    AdditionalUnarmedStrike = new Item(Origin.Core.IllustrationName.Fist, "tail",
+                    AdditionalUnarmedStrike = new Item(IllustrationName.Fist, "tail",
                             new[] { Trait.Sweep, Trait.Unarmed, Trait.Melee, Trait.Weapon })
                         .WithWeaponProperties(new WeaponProperties("1d6", DamageKind.Bludgeoning))
                 });
@@ -87,9 +99,67 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
             .WithCustomName("Razor Claws")
             .WithOnCreature(creature =>
             {
-                creature.UnarmedStrike = new Item(Origin.Core.IllustrationName.DragonClaws, "claws",
+                creature.UnarmedStrike = new Item(IllustrationName.DragonClaws, "claws",
                             new[] { Trait.Agile, Trait.Finesse, Trait.VersatileP, Trait.Unarmed, Trait.Melee, Trait.Weapon })
                         .WithWeaponProperties(new WeaponProperties("1d6", DamageKind.Slashing));
+            });
+
+            yield return new LizardfolkAncestryFeat(
+                "Lightning Tongue",
+                "Your tongue darts out faster than the eye can see to retrieve loose objects.",
+                "You Interact to pick up a single unattended object of light Bulk or less within 10 feet of you. If you don't have enough hands free to hold the object, it falls to the ground in your space.")
+            .WithCustomName("Lightning Tongue")
+            .WithOnCreature(creature =>
+            {
+                creature.AddQEffect(new QEffect("Lightning Tongue", "Pick up an unattended item within 10 feet of you.")
+                {
+                    ProvideContextualAction = (qfSelf) =>
+                    {
+                        if (!qfSelf.Owner.Battle.Map.AllTiles.Any(tile => tile.DroppedItems.Count > 0 && qfSelf.Owner.DistanceTo(tile) <= 2))
+                        {
+                            // No item in range
+                            return null;
+                        }
+
+                        SubmenuPossibility submenuPossibility = new SubmenuPossibility(IllustrationName.PickUp, "Lightning Tongue");
+                        submenuPossibility.Subsections = new List<PossibilitySection>
+                            {
+                                new PossibilitySection("Lightning Tongue")
+                            };
+
+                        //Every tile with dropped items within 2 tiles
+                        IEnumerable<Tile> tiles = qfSelf.Owner.Battle.Map.AllTiles.Where(tile => tile.DroppedItems.Count > 0 && qfSelf.Owner.DistanceTo(tile) <= 2);
+                        List<Possibility> possibilities = new List<Possibility>();
+
+                        //Every such tile
+                        foreach (Tile tile in tiles)
+                        {
+                            //Every dropped item
+                            foreach (Item item in tile.DroppedItems)
+                            {
+                                submenuPossibility.Subsections.First().Possibilities.Add(new ActionPossibility(new CombatAction(creature, item.Illustration, "Pick up (" + item.Name + ")", new Trait[] { Trait.Manipulate, Trait.Starborn }, "Pick up an unattended item within 10 feet of you. If you don't have enough hands free to hold the object, it falls to the ground on your space.",
+                                    Target.Self())
+                                .WithActionCost(1)
+                                .WithItem(item)
+                                .WithEffectOnSelf(creature =>
+                                {
+                                    if ((creature.HasFreeHand && !item.TwoHanded) || creature.HeldItems.Count() == 0)
+                                    {
+                                        creature.AddHeldItem(item);
+                                        tile.DroppedItems.Remove(item);
+                                    }
+                                    else
+                                    {
+                                        tile.DroppedItems.Remove(item);
+                                        qfSelf.Owner.Occupies.DroppedItems.Add(item);
+                                    }
+                                })));
+                            }
+                        }
+                        
+                        return submenuPossibility;
+                    }
+                });
             });
         }
 
@@ -114,8 +184,8 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
                     {
                         StateCheck = (qfSelf) =>
                         {
-                            var kobold = qfSelf.Owner;
-                            kobold.WeaknessAndResistance.AddResistance(DamageKind.Fire, resistanceValue);
+                            var lizardfolk = qfSelf.Owner;
+                            lizardfolk.WeaknessAndResistance.AddResistance(DamageKind.Fire, resistanceValue);
                         }
                     });
                 });
@@ -126,11 +196,63 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
                 .WithCustomName("Frilled Lizardfolk")
                 .WithOnSheet((sheet) =>
                 {
+                    //TODO: It's not exactly what it does, but it is practically what it does.
                     sheet.GrantFeat(FeatName.IntimidatingGlare);
-                });
-                //MENACING APPROACH
-        }
+                })
+                .WithOnCreature(lizardfolk => {
+                    lizardfolk.AddQEffect(new QEffect("Menacing Approach", "You Stride once. If you end your movement adjacent to an enemy, you can Demoralize that enemy. If you succeed, the foe is frightened 2 instead of frightened 1.")
+                    {
+                        ProvideMainAction = (QEffect qfSelf) => new ActionPossibility(new CombatAction(qfSelf.Owner, IllustrationName.FleetStep, "Threatening Approach", new Trait[1] { Trait.Move }, "Stride once. If you end your movement adjacent to an enemy, you can Demoralize that enemy.  If you succeed, the foe is frightened 2 instead of frightened 1.", Target.Self())
+                            .WithActionCost(2)
+                            .WithSoundEffect(SfxName.Footsteps)
+                            .WithEffectOnSelf(async delegate (CombatAction action, Creature self)
+                            {
+                                if (!(await self.StrideAsync("Choose where to Stride with Threatening Approach. If you stride adjacent to an enemy, you can attemp to Demoralize them.", allowStep: false, maximumFiveFeet: false, null, allowCancel: true)))
+                                {
+                                    action.RevertRequested = true;
+                                }
+                                else
+                                {
+                                    List<Option> list = new List<Option>();
+                                    CombatAction combatAction = new CombatAction(self, IllustrationName.Demoralize, "Demoralize", new Trait[6]
+                                    {
+                                        Trait.Auditory, Trait.Concentrate, Trait.Emotion, Trait.Fear, Trait.Mental, Trait.Basic
+                                    }, "With a sudden shout, a well-timed taunt, or a cutting putdown, you can shake an enemy's resolve. Choose a creature within 5 feet of you who you're aware of. Attempt  {b}an Intimidation check{/b} against that target's  {b}Will DC.{/b} If the target does not understand the language you are speaking, or you're not speaking a language, you take a -4 circumstance penalty to the check.\n\nRegardless of your result, the target is immune to your attempts to Demoralize it for the rest of the encounter.\n\n{b}Critical Success{/b} The target becomes frightened 2.\n{b}Success{/b} The target becomes frightened 2.", Target.Ranged(1)).WithActionId(ActionId.Demoralize).WithActiveRollSpecification(new ActiveRollSpecification(Checks.SkillCheck(Skill.Intimidation).WithExtraBonus((CombatAction combatAction, Creature demoralizer, Creature target) => (target.DoesNotSpeakCommon && !demoralizer.HasEffect(QEffectId.IntimidatingGlare)) ? new Bonus(-4, BonusType.Circumstance, "No shared language") : null), Checks.DefenseDC(Defense.Will))).WithSoundEffect(self.HasTrait(Trait.Female) ? SfxName.Intimidate : SfxName.MaleIntimidate)
+                                    .WithActionCost(0)
+                                    .WithProjectileCone(IllustrationName.Demoralize, 24, ProjectileKind.Cone)
+                                    .WithEffectOnEachTarget(async delegate (Creature a, Creature tg, CheckResult k)
+                                    {
+                                        switch (k)
+                                        {
+                                            case CheckResult.CriticalSuccess:
+                                                tg.AddQEffect(QEffect.Frightened(2));
+                                                break;
+                                            case CheckResult.Success:
+                                                tg.AddQEffect(QEffect.Frightened(2));
+                                                break;
+                                        }
 
+                                        tg.AddQEffect(QEffect.ImmunityToTargeting(ActionId.Demoralize, a));
+                                    });
+
+                                    GameLoop.AddDirectUsageOnCreatureOptions(combatAction, list);
+
+                                    if (list.Count > 0)
+                                    {
+                                        if (list.Count == 1)
+                                        {
+                                            await list[0].Action();
+                                        }
+                                        else
+                                        {
+                                            await (await self.Battle.SendRequest(new AdvancedRequest(self, "Choose a creature to Demoralize.", list))).ChosenOption.Action();
+                                        }
+                                    }
+                                }
+                            }))
+                    });
+                });
+        }
         private static void AddFeats(IEnumerable<Feat> feats)
         {
             foreach (var feat in feats)
@@ -139,6 +261,7 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
             }
         }
 
+        //TODO: "inhaled" isn't exactly a trait at the moment. For now, it'll just apply to poison in general.
         public static Feat breathControl = new TrueFeat(FeatName.CustomFeat,
                 1,
                 "You have incredible breath control, which grants you advantages when air is hazardous or sparse.",
@@ -153,5 +276,5 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
                      AdjustSavingThrowResult = (QEffect qf, CombatAction action, CheckResult originalResult) => (action.HasTrait(Trait.Poison) && originalResult == CheckResult.Success) ? CheckResult.CriticalSuccess : originalResult
                 }
             ));
-     }
+    }
 }
