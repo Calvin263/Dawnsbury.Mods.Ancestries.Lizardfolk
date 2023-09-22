@@ -8,17 +8,17 @@
     <PackageOutputPath>$(OutputPath)</PackageOutputPath>
   </PropertyGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy /Y &quot;$(TargetDir)$(ProjectName).dll&quot; &quot;C:\Users\marco\Desktop\Dawnsbury Days Latest\CustomMods\$(ProjectName).dll&quot;" />
+  </Target>
+
   <ItemGroup>
     <Reference Include="Common">
-      <HintPath>..\..\Data\Common.dll</HintPath>
+      <HintPath>..\..\..\Dawnsbury Days Latest\Data\Common.dll</HintPath>
     </Reference>
     <Reference Include="Dawnsbury Days">
-      <HintPath>..\..\Data\Dawnsbury Days.dll</HintPath>
+      <HintPath>..\..\..\Dawnsbury Days Latest\Data\Dawnsbury Days.dll</HintPath>
     </Reference>
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy /Y &quot;$(TargetDir)$(ProjectName).dll&quot; &quot;C:\Users\marco\Desktop\Dawnsbury Days DEVBUILD\CustomMods\$(ProjectName).dll&quot;" />
-  </Target>
 
 </Project>

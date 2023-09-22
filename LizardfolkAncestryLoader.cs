@@ -1,25 +1,26 @@
-﻿using Origin.Audio;
-using Origin.Core;
-using Origin.Core.Animations;
-using Origin.Core.CharacterBuilder.AbilityScores;
-using Origin.Core.CharacterBuilder.Feats;
-using Origin.Core.CharacterBuilder.FeatsDb.Common;
-using Origin.Core.CharacterBuilder.FeatsDb.TrueFeatDb;
-using Origin.Core.CombatActions;
-using Origin.Core.Coroutines.Options;
-using Origin.Core.Coroutines.Requests;
-using Origin.Core.Creatures;
-using Origin.Core.Intelligence;
-using Origin.Core.Mechanics;
-using Origin.Core.Mechanics.Core;
-using Origin.Core.Mechanics.Enumerations;
-using Origin.Core.Mechanics.Targeting;
-using Origin.Core.Mechanics.Treasure;
-using Origin.Core.Possibilities;
-using Origin.Core.Tiles;
-using Origin.Display.Illustrations;
-using Origin.Modding;
+﻿using Dawnsbury.Audio;
+using Dawnsbury.Core;
+using Dawnsbury.Core.Animations;
+using Dawnsbury.Core.CharacterBuilder.AbilityScores;
+using Dawnsbury.Core.CharacterBuilder.Feats;
+using Dawnsbury.Core.CharacterBuilder.FeatsDb.Common;
+using Dawnsbury.Core.CharacterBuilder.FeatsDb.TrueFeatDb;
+using Dawnsbury.Core.CombatActions;
+using Dawnsbury.Core.Coroutines.Options;
+using Dawnsbury.Core.Coroutines.Requests;
+using Dawnsbury.Core.Creatures;
+using Dawnsbury.Core.Intelligence;
+using Dawnsbury.Core.Mechanics;
+using Dawnsbury.Core.Mechanics.Core;
+using Dawnsbury.Core.Mechanics.Enumerations;
+using Dawnsbury.Core.Mechanics.Targeting;
+using Dawnsbury.Core.Mechanics.Treasure;
+using Dawnsbury.Core.Possibilities;
+using Dawnsbury.Core.Tiles;
+using Dawnsbury.Display.Illustrations;
+using Dawnsbury.Modding;
 using System;
+using static Dawnsbury.Delegates;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
@@ -27,7 +28,7 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
 {
     public class LizardfolkAncestryLoader
     {
-        [Origin.Modding.DawnsburyDaysModMainMethodAttribute]
+        [Dawnsbury.Modding.DawnsburyDaysModMainMethodAttribute]
         public static void LoadMod()
         {
             AddFeats(CreateGeneralFeats());
@@ -220,7 +221,7 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
                                     }, "With a sudden shout, a well-timed taunt, or a cutting putdown, you can shake an enemy's resolve. Choose a creature within 5 feet of you who you're aware of. Attempt  {b}an Intimidation check{/b} against that target's  {b}Will DC.{/b} If the target does not understand the language you are speaking, or you're not speaking a language, you take a -4 circumstance penalty to the check.\n\nRegardless of your result, the target is immune to your attempts to Demoralize it for the rest of the encounter.\n\n{b}Critical Success{/b} The target becomes frightened 2.\n{b}Success{/b} The target becomes frightened 2.", Target.Ranged(1)).WithActionId(ActionId.Demoralize).WithActiveRollSpecification(new ActiveRollSpecification(Checks.SkillCheck(Skill.Intimidation).WithExtraBonus((CombatAction combatAction, Creature demoralizer, Creature target) => (target.DoesNotSpeakCommon && !demoralizer.HasEffect(QEffectId.IntimidatingGlare)) ? new Bonus(-4, BonusType.Circumstance, "No shared language") : null), Checks.DefenseDC(Defense.Will))).WithSoundEffect(self.HasTrait(Trait.Female) ? SfxName.Intimidate : SfxName.MaleIntimidate)
                                     .WithActionCost(0)
                                     .WithProjectileCone(IllustrationName.Demoralize, 24, ProjectileKind.Cone)
-                                    .WithEffectOnEachTarget(async delegate (Creature a, Creature tg, CheckResult k)
+                                    .WithEffectOnEachTarget(async delegate (CombatAction c, Creature a, Creature tg, CheckResult k)
                                     {
                                         switch (k)
                                         {
