@@ -3,6 +3,7 @@ using Dawnsbury.Core;
 using Dawnsbury.Core.Animations;
 using Dawnsbury.Core.CharacterBuilder.AbilityScores;
 using Dawnsbury.Core.CharacterBuilder.Feats;
+using Dawnsbury.Core.CharacterBuilder.FeatsDb;
 using Dawnsbury.Core.CharacterBuilder.FeatsDb.Common;
 using Dawnsbury.Core.CharacterBuilder.FeatsDb.TrueFeatDb;
 using Dawnsbury.Core.CombatActions;
@@ -17,6 +18,7 @@ using Dawnsbury.Core.Mechanics.Targeting;
 using Dawnsbury.Core.Mechanics.Treasure;
 using Dawnsbury.Core.Possibilities;
 using Dawnsbury.Core.Tiles;
+using Dawnsbury.Display.CharacterBuilding;
 using Dawnsbury.Display.Illustrations;
 using Dawnsbury.Modding;
 using System;
@@ -28,16 +30,20 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
 {
     public class LizardfolkAncestryLoader
     {
+        public static Trait Lizardfolk;
+
         [Dawnsbury.Modding.DawnsburyDaysModMainMethodAttribute]
         public static void LoadMod()
         {
+            Lizardfolk = ModManager.RegisterTrait("Lizardfolk", new TraitProperties("Lizardfolk", true) { IsAncestryTrait = true });
+
             AddFeats(CreateGeneralFeats());
             AddFeats(CreateLizardfolkAncestryFeats());
 
             ModManager.AddFeat(new AncestrySelectionFeat(
                     FeatName.CustomFeat,
                     "Lizardfolk move through the societies of other humanoids with the steely reserve of born predators. They have a well-deserved reputation as outstanding rangers and unsentimental fighters. Though lizardfolk have adapted to many different environments, many of them still prefer to remain near bodies of water, using their ability to hold their breath to their advantage. As a result, lizardfolk usually prefer equipment that is not easily damaged by moisture, eschewing leather and metal for gear made of stone, ivory, glass, and bone. Claws Your sharp claws offer an alternative to the fists other humanoids bring to a fight.\r\n\r\nYou have a claw unarmed attack that deals 1d4 slashing damage and has the agile and finesse traits.\r\n\r\nAquatic Adaptation Your reptilian biology allows you to hold your breath for a long time. You gain the Breath Control general feat as a bonus feat.",
-                    new List<Trait> { Trait.Humanoid, Trait.Starborn },
+                    new List<Trait> { Trait.Humanoid, Lizardfolk },
                     8,
                     5,
                     new List<AbilityBoost>()
@@ -53,7 +59,7 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
                     sheet.AddFeat(breathControl, null);
                 })
                 .WithOnCreature(creature =>
-                {
+                {                    
                     creature.UnarmedStrike = new Item(IllustrationName.DragonClaws, "claws",
                             new[] { Trait.Agile, Trait.Finesse, Trait.Unarmed, Trait.Melee, Trait.Weapon })
                         .WithWeaponProperties(new WeaponProperties("1d4", DamageKind.Slashing));
@@ -88,9 +94,14 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
                 creature.AddQEffect(new QEffect("Tail Whip", "You have a tail attack.")
                 {
                     AdditionalUnarmedStrike = new Item(IllustrationName.Fist, "tail",
-                            new[] { Trait.Sweep, Trait.Unarmed, Trait.Melee, Trait.Weapon })
+                        new[] { Trait.Sweep, Trait.Unarmed, Trait.Melee, Trait.Weapon })
                         .WithWeaponProperties(new WeaponProperties("1d6", DamageKind.Bludgeoning))
                 });
+
+                creature.QEffects.First(qeffect => qeffect.Name == "Tail Whip").AdditionalUnarmedStrike = 
+                        new Item(IllustrationName.Fist, "tail",
+                        new[] { Trait.Sweep, Trait.Unarmed, Trait.Melee, Trait.Weapon })
+                        .WithWeaponProperties(new WeaponProperties("1d12", DamageKind.Bludgeoning));
             });
 
             yield return new LizardfolkAncestryFeat(
@@ -138,7 +149,7 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
                             //Every dropped item
                             foreach (Item item in tile.DroppedItems)
                             {
-                                submenuPossibility.Subsections.First().Possibilities.Add(new ActionPossibility(new CombatAction(creature, item.Illustration, "Pick up (" + item.Name + ")", new Trait[] { Trait.Manipulate, Trait.Starborn }, "Pick up an unattended item within 10 feet of you. If you don't have enough hands free to hold the object, it falls to the ground on your space.",
+                                submenuPossibility.Subsections.First().Possibilities.Add(new ActionPossibility(new CombatAction(creature, item.Illustration, "Pick up (" + item.Name + ")", new Trait[] { Trait.Manipulate, Lizardfolk }, "Pick up an unattended item within 10 feet of you. If you don't have enough hands free to hold the object, it falls to the ground on your space.",
                                     Target.Self())
                                 .WithActionCost(1)
                                 .WithItem(item)
@@ -177,7 +188,6 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
                 .WithCustomName("Sandstrider Lizardfolk")
                 .WithOnCreature((sheet, creature) =>
                 {
-
                     var resistanceValue = (creature.Level + 1) / 2;
                     creature.AddQEffect(new QEffect("Sandstrider Lizardfolk",
                         "You have fire resistance " +
@@ -271,11 +281,11 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
             })
             .WithCustomName("Breath Control")
             .WithOnCreature(cr => cr.AddQEffect(new QEffect("Breath Control", "You have a +1 circumstance bonus to saving throws against inhaled threats, such as inhaled poisons, and if you roll a success on such a saving throw, you get a critical success instead.")
-                {
-                     Innate = true,
-                     BonusToDefenses = (QEffect qf, CombatAction action, Defense defense) => (action != null && action.HasTrait(Trait.Poison) && defense != 0) ? new Bonus(1, BonusType.Circumstance, "Breath Control") : null,
-                     AdjustSavingThrowResult = (QEffect qf, CombatAction action, CheckResult originalResult) => (action.HasTrait(Trait.Poison) && originalResult == CheckResult.Success) ? CheckResult.CriticalSuccess : originalResult
-                }
-            ));
+            {
+                Innate = true,
+                BonusToDefenses = (QEffect qf, CombatAction action, Defense defense) => (action != null && action.HasTrait(Trait.Poison) && defense != 0) ? new Bonus(1, BonusType.Circumstance, "Breath Control") : null,
+                AdjustSavingThrowResult = (QEffect qf, CombatAction action, CheckResult originalResult) => (action.HasTrait(Trait.Poison) && originalResult == CheckResult.Success) ? CheckResult.CriticalSuccess : originalResult
+            }
+        ));
     }
 }

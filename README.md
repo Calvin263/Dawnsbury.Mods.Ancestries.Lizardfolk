@@ -23,6 +23,3 @@ A small mod for the Lizardfolk Ancestry.
 - Frilled Lizardfolk just grants Intimidating Glare. You should normally be able to choose whether it has the auditory or visual trait instead.
 - Threatening Approach (From Frilled Lizardfolk) lets you stride wherever as opposed to specifically next to an enemy.
 - Lightning Tongue will not let you pick up a two-handed item with one hand, to later add a hand onto it. Instead, you will only pick up the two-handed item if both your hands are empty. As normal, if you are unable to pick up the item with Lightning Tongue, it will be moved into your tile instead.
-
-**Technical stuff:**
-There's no easy way to add traits to the game, so I took the "Starborn" trait to represent Lizardfolk, which isn't in the game.

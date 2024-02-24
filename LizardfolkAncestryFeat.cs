@@ -6,10 +6,10 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk;
 public class LizardfolkAncestryFeat : TrueFeat
 {
     public LizardfolkAncestryFeat(string name, string flavorText, string rulesText)
-        : base(FeatName.CustomFeat, 1, flavorText, rulesText, new[] { Trait.Ancestry, Trait.Starborn })
+        : base(FeatName.CustomFeat, 1, flavorText, rulesText, new[] { Trait.Ancestry, LizardfolkAncestryLoader.Lizardfolk })
     {
         this
             .WithCustomName(name)
-            .WithPrerequisite(sheet => sheet.Ancestries.Contains(Trait.Starborn), "You must be a Lizardfolk.");
+            .WithPrerequisite(sheet => sheet.Ancestries.Contains(LizardfolkAncestryLoader.Lizardfolk), "You must be a Lizardfolk.");
     }
 }
