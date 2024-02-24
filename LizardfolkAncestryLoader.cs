@@ -246,7 +246,7 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
                                         tg.AddQEffect(QEffect.ImmunityToTargeting(ActionId.Demoralize, a));
                                     });
 
-                                    GameLoop.AddDirectUsageOnCreatureOptions(combatAction, list);
+                                    GameLoop.AddDirectUsageOnCreatureOptions(combatAction, list, false);
 
                                     if (list.Count > 0)
                                     {
