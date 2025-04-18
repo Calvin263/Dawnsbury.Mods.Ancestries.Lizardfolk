@@ -101,7 +101,7 @@ namespace Dawnsbury.Mods.Ancestries.Lizardfolk
                 creature.QEffects.First(qeffect => qeffect.Name == "Tail Whip").AdditionalUnarmedStrike = 
                         new Item(IllustrationName.Fist, "tail",
                         new[] { Trait.Sweep, Trait.Unarmed, Trait.Melee, Trait.Weapon })
-                        .WithWeaponProperties(new WeaponProperties("1d12", DamageKind.Bludgeoning));
+                        .WithWeaponProperties(new WeaponProperties("1d6", DamageKind.Bludgeoning));
             });
 
             yield return new LizardfolkAncestryFeat(

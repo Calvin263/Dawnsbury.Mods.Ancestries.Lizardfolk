@@ -1,23 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <BaseOutputPath>bin</BaseOutputPath>
     <PackageOutputPath>$(OutputPath)</PackageOutputPath>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <OutputType>Library</OutputType>
+    <Version>1.0.1</Version>
+    <Configurations>Debug;Release</Configurations>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy /Y &quot;$(TargetDir)$(ProjectName).dll&quot; &quot;C:\Users\marco\Desktop\Dawnsbury Days Latest\CustomMods\$(ProjectName).dll&quot;" />
+    <Exec Command="copy /Y &quot;$(TargetDir)$(ProjectName).dll&quot; &quot;C:\Users\marco\Desktop\DawnsburyDaysMods\DawnsburyDays\CustomMods\$(ProjectName).dll&quot;" />
   </Target>
 
   <ItemGroup>
     <Reference Include="Common">
-      <HintPath>..\..\..\Dawnsbury Days Latest\Data\Common.dll</HintPath>
+      <HintPath>..\DawnsburyDays\Data\Common.dll</HintPath>
     </Reference>
     <Reference Include="Dawnsbury Days">
-      <HintPath>..\..\..\Dawnsbury Days Latest\Data\Dawnsbury Days.dll</HintPath>
+      <HintPath>..\DawnsburyDays\Data\Dawnsbury Days.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoGame.Framework">
+      <HintPath>..\DawnsburyDays\Data\MonoGame.Framework.dll</HintPath>
     </Reference>
   </ItemGroup>
 
